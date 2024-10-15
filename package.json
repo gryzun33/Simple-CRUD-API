@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "start:dev": "nodemon --exec node --loader ts-node/esm --no-warnings=ExperimentalWarning src/index.ts"
+    "start:dev": "nodemon --exec node --loader ts-node/esm --no-warnings=ExperimentalWarning src/index.ts",
+    "start:prod": "tsc && webpack --config webpack.config.js --mode production && node dist/bundle.js"
   },
   "author": "",
   "license": "ISC",
@@ -16,5 +17,8 @@
     "typescript": "^5.6.3",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "ts-loader": "^9.5.1"
   }
 }

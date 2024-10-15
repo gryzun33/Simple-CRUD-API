@@ -1,9 +1,10 @@
+import { sum } from './module-one.js';
 console.log('Hello!');
 
-interface User {
+type User = {
   id: string;
   name: string;
-}
+};
 
 const user: User = {
   id: '12345',
@@ -11,3 +12,4 @@ const user: User = {
 };
 
 console.log(user);
+console.log('sum=', sum(1, 2));
