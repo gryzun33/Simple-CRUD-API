@@ -1,15 +1,16 @@
-import { sum } from './module-one.js';
-console.log('Hello!');
+import http from 'http';
+import { config } from 'dotenv';
 
-type User = {
-  id: string;
-  name: string;
-};
+config();
 
-const user: User = {
-  id: '12345',
-  name: 'Olga',
-};
+const PORT = process.env.PORT || 3000;
 
-console.log(user);
-console.log('sum=', sum(1, 2));
+const server = http.createServer((req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  res.end('Hello!\n');
+});
+
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
