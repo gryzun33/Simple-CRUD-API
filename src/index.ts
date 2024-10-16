@@ -3,7 +3,7 @@ import { config } from 'dotenv';
 import { User } from './utils/types.js';
 import { getUsers } from './responses/responses.js';
 import { isTypeUser } from './utils/helpers.js';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, validate } from 'uuid';
 
 config();
 
@@ -27,6 +27,15 @@ let users: User[] = [
 const server = http.createServer(
   async (req: IncomingMessage, res: ServerResponse) => {
     try {
+      if (!req.url || !req.url.startsWith('/users')) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            message: `Such resource not found. Please check the URL`,
+          })
+        );
+      }
+
       if (req.method === 'GET' && req.url === '/users') {
         getUsers(res, users);
       } else if (req.method === 'POST' && req.url === '/users') {
