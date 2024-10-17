@@ -45,6 +45,15 @@ const server = http.createServer(
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(user));
         }
+      } else if (req.method === 'PUT' && req.url?.startsWith('/users/')) {
+        const path = req.url;
+        const userId = path.replace('/users/', '');
+        if (isValid(res, userId)) {
+          const user = users.find((currUser) => currUser.id === userId);
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(user));
+        }
       } else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(
