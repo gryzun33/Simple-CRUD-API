@@ -1,10 +1,11 @@
 import http, { IncomingMessage, ServerResponse } from 'http';
 import { config } from 'dotenv';
 import { User } from './utils/types';
-import { getUsers } from './responses/responses';
+import { getUsers } from './modules/getUsers';
+import { getParsedBody } from './modules/getParsedBody';
 import { isTypeUser } from './utils/helpers';
-import { v4 as uuidv4, validate } from 'uuid';
-import url from 'url';
+import { isValidUserID } from './modules/isValidUserID';
+import { v4 as uuidv4 } from 'uuid';
 
 config();
 
@@ -47,7 +48,7 @@ const server = http.createServer(
       } else if (req.method === 'GET' && req.url?.startsWith('/api/users/')) {
         const path = req.url;
         const userId = path.replace('/api/users/', '');
-        if (isValid(res, userId)) {
+        if (isValidUserID(res, userId, users)) {
           const user = users.find((currUser) => currUser.id === userId);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(user));
@@ -55,7 +56,7 @@ const server = http.createServer(
       } else if (req.method === 'PUT' && req.url?.startsWith('/api/users/')) {
         const path = req.url;
         const userId = path.replace('/api/users/', '');
-        if (isValid(res, userId)) {
+        if (isValidUserID(res, userId, users)) {
           const userIndex = users.findIndex(
             (currUser) => currUser.id === userId
           );
@@ -86,7 +87,7 @@ const server = http.createServer(
       ) {
         const path = req.url;
         const userId = path.replace('/api/users/', '');
-        if (isValid(res, userId)) {
+        if (isValidUserID(res, userId, users)) {
           const userIndex = users.findIndex((user) => user.id === userId);
           if (userIndex !== -1) {
             users.splice(userIndex, 1);
@@ -117,39 +118,3 @@ const server = http.createServer(
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-function getParsedBody(req: IncomingMessage): Promise<any> {
-  return new Promise((resolve) => {
-    let body = '';
-    req.on('data', (chunk) => {
-      body += chunk;
-    });
-    req.on('end', () => {
-      resolve(JSON.parse(body));
-    });
-  });
-}
-
-function isValid(res: ServerResponse, userId: string): boolean {
-  const userIds = users.map((user) => user.id);
-
-  if (!validate(userId)) {
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(
-      JSON.stringify({
-        message: `UserId is not valid`,
-      })
-    );
-    return false;
-  } else if (!userIds.some((el) => el === userId)) {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(
-      JSON.stringify({
-        message: `User with such id doesn't exist`,
-      })
-    );
-    return false;
-  }
-
-  return true;
-}
