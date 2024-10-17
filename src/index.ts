@@ -80,6 +80,20 @@ const server = http.createServer(
             );
           }
         }
+      } else if (
+        req.method === 'DELETE' &&
+        req.url?.startsWith('/api/users/')
+      ) {
+        const path = req.url;
+        const userId = path.replace('/api/users/', '');
+        if (isValid(res, userId)) {
+          const userIndex = users.findIndex((user) => user.id === userId);
+          if (userIndex !== -1) {
+            users.splice(userIndex, 1);
+            res.writeHead(204);
+            res.end();
+          }
+        }
       } else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(
