@@ -4,6 +4,7 @@ import { User } from './utils/types';
 import { getUsers } from './responses/responses';
 import { isTypeUser } from './utils/helpers';
 import { v4 as uuidv4, validate } from 'uuid';
+import url from 'url';
 
 config();
 
@@ -14,9 +15,15 @@ let users: User[] = [];
 const server = http.createServer(
   async (req: IncomingMessage, res: ServerResponse) => {
     try {
-      if (req.method === 'GET' && req.url === '/users') {
+      if (
+        req.method === 'GET' &&
+        (req.url === '/api/users' || req.url === '/api/users/')
+      ) {
         getUsers(res, users);
-      } else if (req.method === 'POST' && req.url === '/users') {
+      } else if (
+        req.method === 'POST' &&
+        (req.url === '/api/users' || req.url === '/api/users/')
+      ) {
         const body = await getParsedBody(req);
 
         if (isTypeUser(body)) {
@@ -37,28 +44,47 @@ const server = http.createServer(
             })
           );
         }
-      } else if (req.method === 'GET' && req.url?.startsWith('/users/')) {
+      } else if (req.method === 'GET' && req.url?.startsWith('/api/users/')) {
         const path = req.url;
-        const userId = path.replace('/users/', '');
+        const userId = path.replace('/api/users/', '');
         if (isValid(res, userId)) {
           const user = users.find((currUser) => currUser.id === userId);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(user));
         }
-      } else if (req.method === 'PUT' && req.url?.startsWith('/users/')) {
+      } else if (req.method === 'PUT' && req.url?.startsWith('/api/users/')) {
         const path = req.url;
-        const userId = path.replace('/users/', '');
+        const userId = path.replace('/api/users/', '');
         if (isValid(res, userId)) {
-          const user = users.find((currUser) => currUser.id === userId);
+          const userIndex = users.findIndex(
+            (currUser) => currUser.id === userId
+          );
 
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(user));
+          const body = await getParsedBody(req);
+
+          if (isTypeUser(body)) {
+            users[userIndex] = {
+              id: userId,
+              ...body,
+            };
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(users[userIndex]));
+          } else {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(
+              JSON.stringify({
+                message:
+                  'Request body does not contain the required fields or types of the fields do not match the expectations.',
+              })
+            );
+          }
         }
       } else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(
           JSON.stringify({
-            message: `Such resource not found. Please check the URL`,
+            message: `Such URL not found`,
           })
         );
       }
