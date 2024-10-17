@@ -9,33 +9,11 @@ config();
 
 const PORT = process.env.PORT || 3000;
 
-let users: User[] = [
-  {
-    id: '123',
-    username: 'masha',
-    age: 15,
-    hobbies: ['11', '22', '33'],
-  },
-  {
-    id: '124',
-    username: 'masha',
-    age: 15,
-    hobbies: ['11', '22', '33'],
-  },
-];
+let users: User[] = [];
 
 const server = http.createServer(
   async (req: IncomingMessage, res: ServerResponse) => {
     try {
-      if (!req.url || !req.url.startsWith('/users')) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({
-            message: `Such resource not found. Please check the URL`,
-          })
-        );
-      }
-
       if (req.method === 'GET' && req.url === '/users') {
         getUsers(res, users);
       } else if (req.method === 'POST' && req.url === '/users') {
@@ -59,6 +37,21 @@ const server = http.createServer(
             })
           );
         }
+      } else if (req.method === 'GET' && req.url?.startsWith('/users/')) {
+        const path = req.url;
+        const userId = path.replace('/users/', '');
+        if (isValid(res, userId)) {
+          const user = users.find((currUser) => currUser.id === userId);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(user));
+        }
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            message: `Such resource not found. Please check the URL`,
+          })
+        );
       }
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -86,4 +79,28 @@ function getParsedBody(req: IncomingMessage): Promise<any> {
       resolve(JSON.parse(body));
     });
   });
+}
+
+function isValid(res: ServerResponse, userId: string): boolean {
+  const userIds = users.map((user) => user.id);
+
+  if (!validate(userId)) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        message: `UserId is not valid`,
+      })
+    );
+    return false;
+  } else if (!userIds.some((el) => el === userId)) {
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        message: `User with such id doesn't exist`,
+      })
+    );
+    return false;
+  }
+
+  return true;
 }
