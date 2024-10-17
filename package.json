@@ -2,11 +2,11 @@
   "name": "simple-crud-api",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
-  "type": "module",
+  "main": "dist/bundle.js",
+  "type": "commonjs",
   "scripts": {
-    "start:dev": "nodemon --exec node --loader ts-node/esm --no-warnings=ExperimentalWarning src/index.ts",
-    "start:prod": "tsc && node dist/index.js"
+    "start:dev": "nodemon --exec 'ts-node' src/index.ts",
+    "start:prod": "webpack --config webpack.config.mjs && node ./dist/bundle.js"
   },
   "author": "",
   "license": "ISC",

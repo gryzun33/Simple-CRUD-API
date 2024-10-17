@@ -1,4 +1,4 @@
-import { User } from '../utils/types.js';
+import { User } from '../utils/types';
 import { ServerResponse } from 'http';
 
 function getUsers(res: ServerResponse, users: User[]) {

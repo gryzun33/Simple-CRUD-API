@@ -1,8 +1,8 @@
 import http, { IncomingMessage, ServerResponse } from 'http';
 import { config } from 'dotenv';
-import { User } from './utils/types.js';
-import { getUsers } from './responses/responses.js';
-import { isTypeUser } from './utils/helpers.js';
+import { User } from './utils/types';
+import { getUsers } from './responses/responses';
+import { isTypeUser } from './utils/helpers';
 import { v4 as uuidv4, validate } from 'uuid';
 
 config();

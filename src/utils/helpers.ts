@@ -1,4 +1,4 @@
-import { User } from './types.js';
+import { User } from './types';
 
 function isTypeUser(body: any): body is User {
   return (

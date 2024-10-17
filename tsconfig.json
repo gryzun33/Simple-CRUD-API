@@ -1,16 +1,14 @@
 {
   "compilerOptions": {
-    "module": "NodeNext",
-    "target": "ESNext",
-    "moduleResolution": "NodeNext",
+    "target": "ES2015",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
     "outDir": "./dist"
   },
-  "include": ["src/**/*"],
-  "ts-node": {
-    "esm": true
-  }
+  "include": ["src/**/*"]
 }
