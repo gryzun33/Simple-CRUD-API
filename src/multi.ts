@@ -9,12 +9,15 @@ import { getParsedBody } from './modules/getParsedBody';
 import { isTypeUser } from './utils/helpers';
 import { isValidUserID } from './modules/isValidUserID';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs/promises';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
 config();
 
 const masterPort = process.env.PORT || '3000';
 
-let users: User[] = [];
+const usersFilePath = path.resolve(__dirname, 'users.json');
 
 const numbOfCPUs = availableParallelism() - 1;
 
@@ -43,7 +46,6 @@ if (cluster.isPrimary) {
         },
         (resFromWorker) => {
           const statusCode = resFromWorker.statusCode ?? 500;
-          console.log('code=', statusCode);
           res.writeHead(statusCode, resFromWorker.headers);
           resFromWorker.pipe(res);
         }
@@ -66,6 +68,9 @@ if (cluster.isPrimary) {
   const server = http.createServer(
     async (req: IncomingMessage, res: ServerResponse) => {
       console.log(`Request to worker on port ${workerPort}`);
+
+      let users: User[] = await loadUsers();
+
       try {
         if (
           req.method === 'GET' &&
@@ -84,6 +89,8 @@ if (cluster.isPrimary) {
               ...body,
             };
             users.push(newUser);
+
+            await fs.writeFile(usersFilePath, JSON.stringify(users));
 
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(newUser));
@@ -120,6 +127,7 @@ if (cluster.isPrimary) {
                 ...body,
               };
 
+              await fs.writeFile(usersFilePath, JSON.stringify(users));
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify(users[userIndex]));
             } else {
@@ -142,6 +150,8 @@ if (cluster.isPrimary) {
             const userIndex = users.findIndex((user) => user.id === userId);
             if (userIndex !== -1) {
               users.splice(userIndex, 1);
+
+              await fs.writeFile(usersFilePath, JSON.stringify(users));
               res.writeHead(204);
               res.end();
             }
@@ -169,4 +179,13 @@ if (cluster.isPrimary) {
   server.listen(workerPort, () => {
     console.log(`Server is running on port ${workerPort}`);
   });
+}
+
+async function loadUsers() {
+  try {
+    const data = await fs.readFile(usersFilePath, 'utf-8');
+    return JSON.parse(data);
+  } catch (err) {
+    console.error('Error loading users:', err);
+  }
 }
