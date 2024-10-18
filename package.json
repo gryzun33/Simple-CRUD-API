@@ -5,8 +5,10 @@
   "main": "dist/bundle.js",
   "type": "commonjs",
   "scripts": {
+    "build": "webpack --config webpack.config.mjs",
     "start:dev": "nodemon --exec 'ts-node' src/index.ts",
-    "start:prod": "webpack --config webpack.config.mjs && node ./dist/bundle.js"
+    "start:prod": "webpack --config webpack.config.mjs && node ./dist/bundle.js",
+    "start:multi": "nodemon --exec 'ts-node' src/multi.ts"
   },
   "author": "",
   "license": "ISC",
