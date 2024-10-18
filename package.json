@@ -8,14 +8,18 @@
     "build": "webpack --config webpack.config.mjs",
     "start:dev": "nodemon --exec 'ts-node' src/index.ts",
     "start:prod": "webpack --config webpack.config.mjs && node ./dist/bundle.js",
-    "start:multi": "nodemon --exec 'ts-node' src/multi.ts"
+    "start:multi": "nodemon --exec 'ts-node' src/multi.ts",
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/jest": "^29.5.13",
     "@types/uuid": "^10.0.0",
     "dotenv": "^16.4.5",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.7",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
     "uuid": "^10.0.0",
