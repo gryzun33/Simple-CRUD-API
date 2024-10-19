@@ -1,9 +1,11 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
-module.exports = {
+const config = {
   preset: 'ts-jest',
   moduleFileExtensions: ['ts', 'js'],
   testEnvironment: 'node',
   transform: {
-    '^.+.tsx?$': ['ts-jest', {}],
+    '^.+\\.tsx?$': 'ts-jest',
   },
 };
+
+export default config;

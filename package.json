@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/bundle.js",
-  "type": "commonjs",
   "scripts": {
     "build": "webpack --config webpack.config.mjs",
     "start:dev": "nodemon --exec 'ts-node' src/index.ts",
