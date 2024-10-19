@@ -10,7 +10,6 @@ import { isTypeUser } from './utils/helpers';
 import { isValidUserID } from './modules/isValidUserID';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
-import { fileURLToPath } from 'url';
 import path from 'path';
 
 config();
@@ -33,8 +32,8 @@ if (cluster.isPrimary) {
 
   let currentWorkerIndex = 0;
 
-  http
-    .createServer((req, res) => {
+  const mainserver = http.createServer((req, res) => {
+    try {
       const currPort: number = workerPorts[currentWorkerIndex];
 
       const requestToWorker = http.request(
@@ -54,10 +53,20 @@ if (cluster.isPrimary) {
       req.pipe(requestToWorker);
 
       currentWorkerIndex = (currentWorkerIndex + 1) % workerPorts.length;
-    })
-    .listen(masterPort, () => {
-      console.log(`Server is running on port ${masterPort}`);
-    });
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          message:
+            'Oops! There was an error on the server. Please try again later.',
+        })
+      );
+    }
+  });
+
+  mainserver.listen(masterPort, () => {
+    console.log(`Server is running on port ${masterPort}`);
+  });
 
   cluster.on('exit', (worker) => {
     console.log(`Worker ${worker.process.pid} died`);
