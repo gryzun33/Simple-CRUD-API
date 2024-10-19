@@ -33,9 +33,7 @@ describe('create User', () => {
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
       id: expect.any(String),
-      username: user.username,
-      age: user.age,
-      hobbies: expect.arrayContaining([expect.any(String)]),
+      ...user,
     });
     expect(validate(response.body.id)).toBe(true);
   });
@@ -43,14 +41,13 @@ describe('create User', () => {
 
 describe('get User', () => {
   it('should return the user by ID', async () => {
-    const response = await request(server)
-      .get(`/api/users/${userId}`)
-      .expect(200);
+    const response = await request(server).get(`/api/users/${userId}`);
 
-    expect(response.body.id).toBe(userId);
-    expect(response.body.username).toBe(user.username);
-    expect(response.body.age).toBe(user.age);
-    expect(response.body.hobbies).toEqual(expect.arrayContaining(user.hobbies));
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      id: userId,
+      ...user,
+    });
   });
 });
 
@@ -64,15 +61,13 @@ describe('update User', () => {
 
     const response = await request(server)
       .put(`/api/users/${userId}`)
-      .send(updatedUser)
-      .expect(200);
+      .send(updatedUser);
 
-    expect(response.body.id).toBe(userId);
-    expect(response.body.username).toBe(updatedUser.username);
-    expect(response.body.age).toBe(updatedUser.age);
-    expect(response.body.hobbies).toEqual(
-      expect.arrayContaining(updatedUser.hobbies)
-    );
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      id: userId,
+      ...updatedUser,
+    });
   });
 });
 
@@ -80,8 +75,9 @@ describe('get non-existent user', () => {
   it('should return 404 for a non-existent user', async () => {
     const id = '123e4567-e89b-12d3-a456-426614174111';
 
-    const response = await request(server).get(`/api/users/${id}`).expect(404);
+    const response = await request(server).get(`/api/users/${id}`);
 
+    expect(response.status).toBe(404);
     expect(response.body).toEqual({
       message: `User with such id doesn't exist`,
     });
