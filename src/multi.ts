@@ -14,11 +14,16 @@ import path from 'path';
 
 config();
 
+interface Message {
+  type: 'sendUsers' | 'requestUsers' | 'updateUsers';
+  users?: User[];
+}
+
 const masterPort = process.env.PORT || '3000';
 
-const usersFilePath = path.resolve(__dirname, 'users.json');
-
 const numbOfCPUs = availableParallelism() - 1;
+
+let users: User[] = [];
 
 const workerPorts = Array.from(
   { length: numbOfCPUs },
@@ -29,6 +34,14 @@ if (cluster.isPrimary) {
   console.log(`Master process ${process.pid} is running`);
 
   workerPorts.forEach((port) => cluster.fork({ WORKER_PORT: port }));
+
+  cluster.on('message', (worker, message: Message) => {
+    if (message.type === 'requestUsers') {
+      worker.send({ type: 'sendUsers', users });
+    } else if (message.type === 'updateUsers' && message.users) {
+      users = [...message.users];
+    }
+  });
 
   let currentWorkerIndex = 0;
 
@@ -73,19 +86,19 @@ if (cluster.isPrimary) {
   });
 } else {
   const workerPort = process.env.WORKER_PORT;
+  let workerUsers: User[] = [];
 
   const server = http.createServer(
     async (req: IncomingMessage, res: ServerResponse) => {
       console.log(`Request to worker on port ${workerPort}`);
 
-      let users: User[] = await loadUsers();
-
       try {
+        workerUsers = await updateUsers();
         if (
           req.method === 'GET' &&
           (req.url === '/api/users' || req.url === '/api/users/')
         ) {
-          getUsers(res, users);
+          getUsers(res, workerUsers);
         } else if (
           req.method === 'POST' &&
           (req.url === '/api/users' || req.url === '/api/users/')
@@ -97,9 +110,11 @@ if (cluster.isPrimary) {
               id: uuidv4(),
               ...body,
             };
-            users.push(newUser);
+            workerUsers.push(newUser);
 
-            await fs.writeFile(usersFilePath, JSON.stringify(users));
+            if (process.send) {
+              process.send({ type: 'updateUsers', users: workerUsers });
+            }
 
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(newUser));
@@ -115,30 +130,33 @@ if (cluster.isPrimary) {
         } else if (req.method === 'GET' && req.url?.startsWith('/api/users/')) {
           const path = req.url;
           const userId = path.replace('/api/users/', '');
-          if (isValidUserID(res, userId, users)) {
-            const user = users.find((currUser) => currUser.id === userId);
+          if (isValidUserID(res, userId, workerUsers)) {
+            const user = workerUsers.find((currUser) => currUser.id === userId);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(user));
           }
         } else if (req.method === 'PUT' && req.url?.startsWith('/api/users/')) {
           const path = req.url;
           const userId = path.replace('/api/users/', '');
-          if (isValidUserID(res, userId, users)) {
-            const userIndex = users.findIndex(
+          if (isValidUserID(res, userId, workerUsers)) {
+            const userIndex = workerUsers.findIndex(
               (currUser) => currUser.id === userId
             );
 
             const body = await getParsedBody(req);
 
             if (isTypeUser(body)) {
-              users[userIndex] = {
+              workerUsers[userIndex] = {
                 id: userId,
                 ...body,
               };
 
-              await fs.writeFile(usersFilePath, JSON.stringify(users));
+              if (process.send) {
+                process.send({ type: 'updateUsers', users: workerUsers });
+              }
+
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify(users[userIndex]));
+              res.end(JSON.stringify(workerUsers[userIndex]));
             } else {
               res.writeHead(400, { 'Content-Type': 'application/json' });
               res.end(
@@ -155,12 +173,17 @@ if (cluster.isPrimary) {
         ) {
           const path = req.url;
           const userId = path.replace('/api/users/', '');
-          if (isValidUserID(res, userId, users)) {
-            const userIndex = users.findIndex((user) => user.id === userId);
+          if (isValidUserID(res, userId, workerUsers)) {
+            const userIndex = workerUsers.findIndex(
+              (user) => user.id === userId
+            );
             if (userIndex !== -1) {
-              users.splice(userIndex, 1);
+              workerUsers.splice(userIndex, 1);
 
-              await fs.writeFile(usersFilePath, JSON.stringify(users));
+              if (process.send) {
+                process.send({ type: 'updateUsers', users: workerUsers });
+              }
+
               res.writeHead(204);
               res.end();
             }
@@ -188,13 +211,19 @@ if (cluster.isPrimary) {
   server.listen(workerPort, () => {
     console.log(`Server is running on port ${workerPort}`);
   });
-}
 
-async function loadUsers() {
-  try {
-    const data = await fs.readFile(usersFilePath, 'utf-8');
-    return JSON.parse(data);
-  } catch (err) {
-    console.error('Error loading users:', err);
+  function updateUsers() {
+    return new Promise<User[]>((resolve) => {
+      if (process.send) {
+        process.send({ type: 'requestUsers' });
+      }
+
+      process.once('message', (message: Message) => {
+        if (message.type === 'sendUsers' && message.users) {
+          workerUsers = message.users;
+          resolve(workerUsers);
+        }
+      });
+    });
   }
 }
