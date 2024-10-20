@@ -1,16 +1,11 @@
-import cluster from 'node:cluster';
-import { availableParallelism } from 'node:os';
 import process from 'node:process';
 import http, { IncomingMessage, ServerResponse } from 'http';
-import { config } from 'dotenv';
 import { User } from './utils/types';
 import { getUsers } from './modules/getUsers';
 import { getParsedBody } from './modules/getParsedBody';
 import { isTypeUser } from './utils/helpers';
 import { isValidUserID } from './modules/isValidUserID';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs/promises';
-import path from 'path';
 
 interface Message {
   type: 'sendUsers' | 'requestUsers' | 'updateUsers';
