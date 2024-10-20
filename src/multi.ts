@@ -50,7 +50,7 @@ cluster.on('message', (worker, message: Message) => {
 
 let currentWorkerIndex = 0;
 
-const mainserver = http.createServer((req, res) => {
+const server = http.createServer((req, res) => {
   try {
     const currPort: number = workerPorts[currentWorkerIndex];
 
@@ -82,10 +82,12 @@ const mainserver = http.createServer((req, res) => {
   }
 });
 
-mainserver.listen(masterPort, () => {
+server.listen(masterPort, () => {
   console.log(`Server is running on port ${masterPort}`);
 });
 
 cluster.on('exit', (worker) => {
   console.log(`Worker ${worker.process.pid} died`);
 });
+
+export { server };
