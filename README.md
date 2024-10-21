@@ -10,7 +10,7 @@
 
 4. Change file `.env.example` to `.env`
 
-5. Now you can run project
+5. Intsall all dependencies `npm install`
 
 ### Scripts
 
