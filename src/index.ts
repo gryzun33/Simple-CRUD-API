@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 config();
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 let users: User[] = [];
 
