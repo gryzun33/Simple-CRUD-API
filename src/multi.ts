@@ -13,7 +13,7 @@ interface Message {
   users?: User[];
 }
 
-const masterPort = process.env.PORT || '3000';
+const masterPort = process.env.PORT || 3000;
 
 const pathToWorker = path.resolve(__dirname, 'worker.ts');
 
